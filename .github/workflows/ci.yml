@@ -27,7 +27,7 @@ jobs:
         run: |
           uv run ruff check .
           uv run mypy ingestion search agents api settings.py
-      - name: Tests (no LLM key needed: agents use a scripted fake LLM)
+      - name: Tests (no LLM key needed, agents use a scripted fake LLM)
         run: uv run pytest -q --cov=ingestion --cov=search --cov=agents --cov=api --cov-report=term
       - name: Retrieval evaluation (gate)
         run: |
