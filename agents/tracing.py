@@ -8,7 +8,7 @@ import time
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ class Span:
         self.record: dict[str, Any] = {
             "type": "step", "run_id": tracer.run_id, "agent": agent, "input": _short(input),
             "tool_calls": [], "llm_calls": [], "output": None, "error": None,
-            "started_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+            "started_at": datetime.now(UTC).isoformat(timespec="milliseconds"),
         }
 
     def tool(self, name: str, args: Any, result: Any, ms: float) -> None:

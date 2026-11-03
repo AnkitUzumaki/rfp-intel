@@ -1,7 +1,7 @@
 """Structured contracts for every agent-to-agent message (Pydantic) + the field rubric loader."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Any, Literal
 
@@ -157,7 +157,7 @@ class FieldOutput(BaseModel):
 
 class BidRecord(BaseModel):
     bid_id: str
-    generated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    generated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds"))
     run_id: str = ""
     fields: dict[str, FieldOutput]
     addendum_changes: list[AddendumChange] = Field(default_factory=list)
