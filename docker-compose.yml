@@ -1,0 +1,42 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    volumes: [qdrant_data:/qdrant/storage]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      retries: 20
+
+  api:
+    build: .
+    env_file: [.env]
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      DATA_ROOT: /app/data
+    volumes:
+      - ./data:/app/data:ro          # bid folders (data/Bid1, data/Bid2, any new bid)
+      - ./outputs:/app/outputs       # JSON records, reports, traces
+      - index_meta:/app/.index       # manifests + semantic cache
+    ports: ["8000:8000"]
+    depends_on:
+      qdrant: {condition: service_healthy}
+    # index both sample bids, then serve the API
+    command: ["sh", "-c", "python main.py index Bid1 Bid2 && python main.py serve --host 0.0.0.0 --port 8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      retries: 60
+
+  ui:
+    build: .
+    environment:
+      API_URL: http://api:8000
+    ports: ["8501:8501"]
+    depends_on:
+      api: {condition: service_healthy}
+    command: ["python", "-m", "streamlit", "run", "ui/streamlit_app.py", "--server.port", "8501",
+              "--server.address", "0.0.0.0"]
+
+volumes:
+  qdrant_data:
+  index_meta:

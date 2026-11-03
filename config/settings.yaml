@@ -1,0 +1,54 @@
+# Non-secret configuration. Secrets + model names for LLM come from .env (see .env.example).
+ingestion:
+  ocr_enabled: true            # OCR pages that have images but no text layer
+  ocr_dpi: 150                 # render resolution for OCR (higher = slower, better)
+  min_page_chars: 20           # below this a page counts as empty
+  header_footer_ratio: 0.5     # line repeated at page top/bottom on >= this share of pages -> removed
+  header_footer_zone: 3        # lines from top/bottom inspected for repeats
+
+chunking:
+  target_chars: 2000           # ~500 tokens
+  overlap_chars: 300           # ~15%
+  max_table_chars: 3000        # larger tables split by rows, header repeated
+
+search:
+  collection: rfp_chunks
+  store_dir: .index            # embedded Qdrant + manifests + cache; QDRANT_URL env -> server mode
+  dense_model: BAAI/bge-small-en-v1.5
+  sparse_model: Qdrant/bm25
+  rerank_model: Xenova/ms-marco-MiniLM-L-12-v2   # alt: BAAI/bge-reranker-base (larger, slower on CPU)
+  model_cache: .models         # fastembed model downloads (persistent, mounted in docker)
+  candidates: 30               # per-leg candidates before fusion
+  top_k: 5
+  rerank_candidates: 20        # top-N fused candidates passed to the cross-encoder
+  expand_queries: true         # synonym expansion for the keyword (BM25) leg
+
+cache:
+  enabled: true
+  threshold: 0.95              # cosine similarity for a semantic cache hit
+
+agents:
+  max_retries: 2               # validator -> re-retrieve/re-extract loop limit per field
+  retry_not_found: true        # one extra retrieval attempt (LLM-rewritten queries) for not-found fields
+  evidence_per_field: 4        # passages per field sent to the extractor
+  evidence_chars: 1600         # each passage truncated to this many chars in prompts
+  max_prompt_chars: 48000      # hard cap on evidence text per LLM call (search-as-tool guardrail)
+  parallel_groups: true
+  judge_enabled: true          # LLM judge checks evidence support (small model)
+  qa_top_k: 6
+  confidence_weights: {quote_match: 0.35, rerank: 0.25, agreement: 0.15, judge: 0.25, retry_penalty: 0.10}
+
+llm:
+  temperature: 0
+  timeout_s: 90
+  max_attempts: 3              # per provider, exponential backoff on 429 / timeout / 5xx
+  backoff_s: 4
+  # USD per 1M tokens [input, output] for cost tracking; free tiers still report nominal cost
+  prices:
+    gemini-2.5-flash: [0.30, 2.50]
+    gemini-2.5-flash-lite: [0.10, 0.40]
+    llama-3.3-70b-versatile: [0.59, 0.79]
+    default: [0.50, 1.50]
+
+outputs:
+  dir: outputs

@@ -1,0 +1,8 @@
+# Company capability profile for the Go / No-Go recommendation (bonus). Edit to match your company.
+company: Example IT Reseller LLC
+authorized_manufacturers: [Dell, HP, Lenovo, Microsoft]   # manufacturers we are registered/authorized with
+max_bid_bond_percent: 10           # largest bid bond we can post (percent of bid)
+can_provide_installation: true     # imaging / deployment / white-glove services
+min_delivery_days_needed: 30       # shortest delivery window (days after award) we can commit to
+min_days_to_prepare: 7             # minimum days needed between evaluation date and due date
+as_of: null                        # evaluation date YYYY-MM-DD; null = today (set a past date to replay old bids)

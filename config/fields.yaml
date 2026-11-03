@@ -1,0 +1,149 @@
+# Field rubric (PDF §8) — single source of truth for extraction prompts, the validator and the scorer.
+#   group:     extraction specialist that owns the field
+#   format:    validator format check (text | datetime | date_or_window | enum_list | list | object)
+#   queries:   search queries the Retrieval Agent runs (bid filter added automatically)
+#   addendum:  true -> Reconciliation Agent checks addenda for overrides
+#   negative:  explicit "none" value allowed when the documents SAY so (cited); silence -> null
+#   scoring:   rule used by eval/score_extraction.py
+groups:
+  dates_logistics: Dates & Logistics
+  commercial_legal: Commercial & Legal
+  product_specs: Product & Specs
+  org_contact: Org & Contact
+
+fields:
+  Bid Number:
+    group: org_contact
+    description: Official solicitation / RFP identifier (e.g. JA-207652). Prefer the solicitation number over internal reference numbers; list other official identifiers in notes.
+    format: text
+    queries: [solicitation number, RFP number bid number, project number PORFP number]
+    scoring: exact
+  Title:
+    group: org_contact
+    description: Full title of the bid or RFP.
+    format: text
+    queries: [title of the solicitation, request for proposal title]
+    scoring: fuzzy
+  Due Date:
+    group: dates_logistics
+    description: Final submission deadline including time and time zone, formatted "YYYY-MM-DD HH:MM TZ". Must reflect addendum changes; put the original date in notes when changed.
+    format: datetime
+    queries: [proposal due date and time, closing date submission deadline, solicitation due]
+    addendum: true
+    scoring: datetime
+  Bid Submission Type:
+    group: dates_logistics
+    description: How the bid is submitted. Value is a list from [electronic_portal, sealed_paper, email, fax, in_person, other]; put the portal/system name in notes.
+    format: enum_list
+    enum: [electronic_portal, sealed_paper, email, fax, in_person, other]
+    queries: [how to submit proposals, bid submission instructions electronic portal, responses will only be accepted through]
+    scoring: set
+  Term of Bid:
+    group: commercial_legal
+    description: Contract duration and any renewal options (e.g. "3 years initial + two 1-year renewals, max 5 years").
+    format: text
+    queries: [contract term length of contract, renewal options extension, initial term]
+    addendum: true
+    scoring: keywords
+  Pre Bid Meeting:
+    group: dates_logistics
+    description: Object {date, time, location, mandatory (true/false/null if not stated)} or the string "None" when the documents state there is none.
+    format: object
+    keys: [date, time, location, mandatory]
+    queries: [pre-bid meeting pre-proposal conference, prebid conference date attendance mandatory]
+    addendum: true
+    negative: true
+    scoring: subfields
+  Installation:
+    group: dates_logistics
+    description: Object {required (true/false), services (list such as installation, deployment, imaging, asset tagging, white glove)}.
+    format: object
+    keys: [required, services]
+    queries: [installation deployment imaging services, white glove services asset tagging etching, setup configuration services required]
+    addendum: true
+    negative: true
+    scoring: subfields
+  Bid Bond Requirement:
+    group: commercial_legal
+    description: Required bid bond / bid security with amount or percentage, or "Not required" ONLY when the documents explicitly say so. If the documents never state a bid bond requirement, value is null.
+    format: text
+    queries: [bid bond bid security required percentage, proposal guarantee surety bond, insurance and bonds requirements]
+    addendum: true
+    negative: true
+    scoring: category
+  Delivery Date:
+    group: dates_logistics
+    description: Required delivery date or delivery window after award (e.g. "Within 45 days of award").
+    format: date_or_window
+    queries: [delivery date delivered within days of award, when do you need these delivered, shipment lead time]
+    addendum: true
+    scoring: normalized
+  Payment Terms:
+    group: commercial_legal
+    description: Payment terms (e.g. Net 30) and invoicing conditions (where/how/when to invoice).
+    format: text
+    queries: [payment terms net 30, invoicing instructions invoice submitted within days, payment invoice requirements]
+    addendum: true
+    scoring: keywords
+  Any Additional Documentation Required:
+    group: commercial_legal
+    description: List of required documents to submit (affidavits, forms, certificates, insurance, W-9, addendum acknowledgements, etc.).
+    format: list
+    queries: [required forms attachments W9 affidavit, documents must be submitted with the proposal, certificate of insurance form required, affidavit must provide]
+    addendum: true
+    scoring: set
+  MFG for Registration:
+    group: product_specs
+    description: Manufacturer(s) the bidder must be registered / authorized with (authorized reseller of X). Null if not stated.
+    format: list
+    queries: [authorized reseller manufacturer, manufacturer or authorized reseller qualifications, letter of authorization from manufacturer]
+    scoring: set
+  Contract or Cooperative to use:
+    group: commercial_legal
+    description: Referenced cooperative or state contract vehicle (e.g. master contract number, purchasing cooperative). Null if none.
+    format: text
+    queries: [cooperative purchasing contract vehicle, master contract eligible contractors, interlocal agreement cooperative]
+    scoring: fuzzy
+  Model_no:
+    group: product_specs
+    description: Model number(s) of the requested product(s), as a list.
+    format: list
+    queries: [model number product model, product name description model qty, laptop model]
+    scoring: set
+  Part_no:
+    group: product_specs
+    description: Part / SKU number(s) of the requested product(s), as a list. Use the main product/base SKUs, not every component line.
+    format: list
+    queries: [SKU part number, base SKU product part number, dock part number]
+    scoring: set
+  Product:
+    group: product_specs
+    description: List of {name, quantity} for each requested product (quantity null if not stated).
+    format: list
+    keys: [name, quantity]
+    queries: [product name quantity qty, devices requested quantities, items requested]
+    scoring: products
+  contact_info:
+    group: org_contact
+    description: Procurement contact object {name, email, phone}. Use null for missing sub-values.
+    format: object
+    keys: [name, email, phone]
+    queries: [procurement contact buyer email phone, point of contact procurement officer, questions should be addressed to]
+    scoring: subfields
+  company_name:
+    group: org_contact
+    description: Issuing organization / agency name.
+    format: text
+    queries: [issuing organization agency, school district purchasing department, agency division name]
+    scoring: fuzzy
+  Product Specification:
+    group: product_specs
+    description: Key technical specs as an object {cpu, ram, storage, display, warranty, os, other} (other = list of notable items). For multiple device tiers, summarize per tier inside "other".
+    format: object
+    keys: [cpu, ram, storage, display, warranty, os, other]
+    queries: [processor memory storage display specifications, warranty years minimum, operating system configuration, minimum hardware requirements]
+    addendum: true
+    scoring: keywords
+
+# Generated by the Report Agent after validation (not extracted from a single passage).
+summary_field: Bid Summary
