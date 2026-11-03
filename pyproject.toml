@@ -2,7 +2,7 @@
 name = "rfp-intel"
 version = "0.1.0"
 description = "RFP Intelligence Platform: hybrid RAG search engine + multi-agent extraction"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "pymupdf>=1.24",
     "beautifulsoup4>=4.12",
